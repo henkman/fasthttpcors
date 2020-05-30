@@ -179,6 +179,7 @@ func (c *CorsHandler) areHeadersAllowed(headers [][]byte) bool {
 	}
 	for _, header := range headers {
 		found := false
+		header = bytes.TrimSpace(header)
 		for _, h := range c.allowedHeaders {
 			if h == string(header) {
 				found = true

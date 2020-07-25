@@ -2,6 +2,7 @@ package fasthttpcors
 
 import (
 	"bytes"
+	"net/textproto"
 	"os"
 	"strconv"
 	"strings"
@@ -45,7 +46,6 @@ func DefaultHandler() *CorsHandler {
 func NewCorsHandler(options Options) *CorsHandler {
 	cors := &CorsHandler{
 		allowedOrigins:   options.AllowedOrigins,
-		allowedHeaders:   options.AllowedHeaders,
 		allowCredentials: options.AllowCredentials,
 		allowedMethods:   options.AllowedMethods,
 		exposedHeaders:   options.ExposedHeaders,
@@ -69,11 +69,13 @@ func NewCorsHandler(options Options) *CorsHandler {
 			}
 		}
 	}
-	if len(cors.allowedHeaders) == 0 {
+	if len(options.AllowedHeaders) == 0 {
 		cors.allowedHeaders = defaultOptions.AllowedHeaders
 		cors.allowedHeadersAll = true
 	} else {
-		for _, v := range options.AllowedHeaders {
+		cors.allowedHeaders = make([]string, len(options.AllowedHeaders))
+		for i, v := range options.AllowedHeaders {
+			cors.allowedHeaders[i] = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(v))
 			if v == "*" {
 				cors.allowedHeadersAll = true
 				break
@@ -179,9 +181,9 @@ func (c *CorsHandler) areHeadersAllowed(headers [][]byte) bool {
 	}
 	for _, header := range headers {
 		found := false
-		header = bytes.TrimSpace(header)
+		header := textproto.CanonicalMIMEHeaderKey(string(bytes.TrimSpace(header)))
 		for _, h := range c.allowedHeaders {
-			if h == string(header) {
+			if h == header {
 				found = true
 			}
 		}
